@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>従業員更新</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="common/side :: copy"></div>
+
+<div class="container mt-4">
+    <h2>従業員更新</h2>
+
+    <form th:action="@{|/employees/${employee.code}/update|}" th:object="${employee}" method="post">
+
+        <div class="mb-3">
+            <label class="form-label">社員番号</label>
+            <input type="text" th:field="*{code}" class="form-control" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">氏名</label>
+            <input type="text" th:field="*{name}" class="form-control" maxlength="20" required>
+            <div th:if="${#fields.hasErrors('name')}" class="text-danger" th:errors="*{name}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">パスワード（変更時のみ入力）</label>
+            <input type="password" th:field="*{password}" class="form-control" maxlength="255">
+            <div th:if="${#fields.hasErrors('password')}" class="text-danger" th:errors="*{password}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">権限</label>
+            <select th:field="*{role}" class="form-select">
+                <option value="ADMIN">管理者</option>
+                <option value="GENERAL">一般</option>
+            </select>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">更新</button>
+            <a th:href="@{/employees}" class="btn btn-secondary">戻る</a>
+        </div>
+
+    </form>
+</div>
+</body>
+</html>
