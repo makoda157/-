@@ -33,6 +33,10 @@ public class Employee {
         public String getValue() {
             return this.name;
         }
+
+		public boolean isAdmin() {
+			return false;
+		}
     }
 
     // ID

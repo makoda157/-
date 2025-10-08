@@ -21,6 +21,6 @@ public enum ErrorKinds {
     // チェックOK
     CHECK_OK,
     // 正常終了
-    SUCCESS, DB_ACCESS_ERROR;
+    SUCCESS, DB_ACCESS_ERROR, AUTHORITY_ERROR;
 
 }
