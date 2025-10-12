@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html class="h-100" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<html class="h-100"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="common/header :: head_fragment(title=日報詳細)"></head>
 <body class="h-100 overflow-hidden">
 <div class="row h-100">
@@ -9,17 +12,27 @@
   <div class="mt-3 h-100 col-sm-10">
 
     <div class="container-fluid p-0">
-      <h1 th:text="'id:' + ${id} + ' の日報詳細'" class="h3 mb-3"></h1>
+      <h1 class="h3 mb-3">日報 詳細</h1>
     </div>
 
     <div class="mb-3 col-12 col-xxl-6">
       <div class="col-xl-12">
         <div class="card">
           <div class="card-body mb-5">
+
+            <!-- 画面内エラー表示（必要時） -->
+            <div th:if="${deleteError}" class="alert alert-danger" th:text="${deleteError}"></div>
+            <div th:if="${authorityError}" class="alert alert-danger" th:text="${authorityError}"></div>
+            <div th:if="${detailError}" class="alert alert-danger" th:text="${detailError}"></div>
+
             <table class="table table-striped">
               <tr>
                 <th class="w-25">日付</th>
-                <td class="align-middle" th:text="${report.reportDate}"></td>
+                <td class="align-middle" th:text="${#temporals.format(report.reportDate, 'yyyy-MM-dd')}"></td>
+              </tr>
+              <tr>
+                <th>氏名</th>
+                <td class="align-middle" th:text="${report.employee.name}"></td>
               </tr>
               <tr>
                 <th>タイトル</th>
@@ -27,11 +40,9 @@
               </tr>
               <tr>
                 <th>内容</th>
-                <td class="align-middle"><pre th:text="${report.content}"></pre></td>
-              </tr>
-              <tr>
-                <th>作成者</th>
-                <td class="align-middle" th:text="${report.employee.name}"></td>
+                <td class="align-middle">
+                  <pre class="mb-0" style="white-space: pre-wrap;" th:text="${report.content}"></pre>
+                </td>
               </tr>
               <tr>
                 <th>登録日時</th>
@@ -44,20 +55,29 @@
             </table>
 
             <div class="mt-5 row g-1">
-              <div class="col-auto">
-                <a th:href="@{/reports/{id}/update(id=${id})}" class="btn btn-primary">更新</a>
+              <!-- 更新：管理者 or 本人のみ表示 -->
+              <div class="col-auto"
+                   sec:authorize="hasAuthority('ADMIN') or #authentication.principal.employee.code == report.employee.code">
+                <a th:href="@{/reports/{id}/update(id=${report.id})}" class="btn btn-primary">更新</a>
               </div>
-              <div class="col-auto">
-                <form th:action="@{/reports/{id}/delete(id=${id})}" method="post">
-                  <input type="submit" value="削除" class="btn btn-primary">
+
+              <!-- 削除：管理者 or 本人のみ表示（CSRF必須） -->
+              <div class="col-auto"
+                   sec:authorize="hasAuthority('ADMIN') or #authentication.principal.employee.code == report.employee.code">
+                <form th:action="@{/reports/{id}/delete(id=${report.id})}" method="post"
+                      onsubmit="if(!window.confirm('本当に削除しますか？')){ event.preventDefault(); }">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-primary">削除</button>
                 </form>
+
               </div>
+
+              <!-- 戻る -->
               <div class="col-auto">
                 <a th:href="@{/reports}" class="btn btn-primary">戻る</a>
               </div>
             </div>
 
-            <span th:if="${deleteError} neq null" th:text="${deleteError}" class="text-danger"></span>
           </div>
         </div>
       </div>
