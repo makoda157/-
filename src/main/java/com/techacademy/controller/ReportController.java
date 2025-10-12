@@ -8,12 +8,16 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
 import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.service.ReportService;
 import com.techacademy.service.UserDetail;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("reports")
@@ -30,15 +34,36 @@ public class ReportController {
     @GetMapping
     public String list(@AuthenticationPrincipal UserDetail user, Model model) {
         Employee loginUser = user.getEmployee();
-        model.addAttribute("reportList", reportService.listFor(loginUser));
-        model.addAttribute("listSize", reportService.listFor(loginUser).size());
+
+        // ★修正：一覧取得の二重呼び出しをやめ、1回の結果を使い回す
+        List<Report> list = reportService.listFor(loginUser);
+        model.addAttribute("reportList", list);
+        model.addAttribute("listSize", list.size());
+
         return "reports/list";
     }
 
     /** 日報詳細 */
     @GetMapping("/{id}/")
-    public String detail(@PathVariable("id") Integer id, Model model) {
+    public String detail(@PathVariable("id") Integer id,
+                         @AuthenticationPrincipal UserDetail user,
+                         Model model,
+                         RedirectAttributes redirectAttrs) {
+
         Report report = reportService.findById(id);
+        if (report == null) {
+            // ★修正：存在しない場合は一覧へ戻す
+            redirectAttrs.addFlashAttribute("detailError", "該当の日報が存在しません。");
+            return "redirect:/reports";
+        }
+
+        // ★修正：権限チェック（一般ユーザーは自分のもの以外を見られない）
+        boolean isAdmin = user.getEmployee().getRole().isAdmin();
+        if (!isAdmin && !report.getEmployee().getCode().equals(user.getEmployee().getCode())) {
+            redirectAttrs.addFlashAttribute("authorityError", "権限がありません。");
+            return "redirect:/reports";
+        }
+
         model.addAttribute("report", report);
         return "reports/detail";
     }
@@ -71,8 +96,24 @@ public class ReportController {
 
     /** 更新フォーム */
     @GetMapping("/{id}/update")
-    public String editForm(@PathVariable("id") Integer id, Model model) {
+    public String editForm(@PathVariable("id") Integer id,
+                           @AuthenticationPrincipal UserDetail user,
+                           Model model,
+                           RedirectAttributes redirectAttrs) {
+
         Report report = reportService.findById(id);
+        if (report == null) {
+            redirectAttrs.addFlashAttribute("updateError", "該当の日報が存在しません。");
+            return "redirect:/reports";
+        }
+
+        // ★修正：フォーム表示時にも権限チェック
+        boolean isAdmin = user.getEmployee().getRole().isAdmin();
+        if (!isAdmin && !report.getEmployee().getCode().equals(user.getEmployee().getCode())) {
+            redirectAttrs.addFlashAttribute("authorityError", "権限がありません。");
+            return "redirect:/reports";
+        }
+
         model.addAttribute("report", report);
         return "reports/edit";
     }
@@ -124,4 +165,3 @@ public class ReportController {
         return "redirect:/reports";
     }
 }
-

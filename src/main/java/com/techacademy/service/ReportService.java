@@ -37,10 +37,18 @@ public class ReportService {
         return opt.orElse(null);
     }
 
-    /** 新規登録 */
+    /** 新規登録（業務チェック：同一社員×同一日付の重複禁止） */
     @Transactional
     public ErrorKinds create(Report report, Employee owner) {
         try {
+            // 既存（未削除）に同一日付があるか
+            boolean exists = reportRepository
+                    .existsByEmployeeAndReportDateAndDeleteFlgFalse(owner, report.getReportDate());
+            if (exists) {
+                // 画面側では ErrorMessage.DATECHECK_ERROR → reportDateError に紐づく
+                return ErrorKinds.DATECHECK_ERROR;
+            }
+
             report.setEmployee(owner);
             reportRepository.save(report);
             return ErrorKinds.SUCCESS;
@@ -84,7 +92,7 @@ public class ReportService {
             }
 
             report.setDeleteFlg(true);
-            reportRepository.save(report); // 永続化
+            reportRepository.save(report);
             return ErrorKinds.SUCCESS;
 
         } catch (Exception e) {

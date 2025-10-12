@@ -1,4 +1,3 @@
-
 package com.techacademy.entity;
 
 import java.time.LocalDateTime;
@@ -24,7 +23,7 @@ public class Employee {
     public static enum Role {
         GENERAL("一般"), ADMIN("管理者");
 
-        private String name;
+        private final String name;
 
         private Role(String name) {
             this.name = name;
@@ -34,9 +33,10 @@ public class Employee {
             return this.name;
         }
 
-		public boolean isAdmin() {
-			return false;
-		}
+        /** 管理者権限判定 */
+        public boolean isAdmin() {
+            return this == ADMIN;
+        }
     }
 
     // ID
@@ -53,7 +53,7 @@ public class Employee {
     private String name;
 
     // 権限
-    @Column(columnDefinition="VARCHAR(10)", nullable = false)
+    @Column(columnDefinition = "VARCHAR(10)", nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -62,7 +62,7 @@ public class Employee {
     private String password;
 
     // 削除フラグ(論理削除を行うため)
-    @Column(columnDefinition="TINYINT", nullable = false)
+    @Column(columnDefinition = "TINYINT", nullable = false)
     private boolean deleteFlg;
 
     // 登録日時
@@ -73,4 +73,8 @@ public class Employee {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    /** インスタンスからでも権限を確認可能にする補助メソッド */
+    public boolean isAdmin() {
+        return role != null && role.isAdmin();
+    }
 }

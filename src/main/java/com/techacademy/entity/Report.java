@@ -30,7 +30,8 @@ public class Report {
 
     /** タイトル */
     @NotBlank
-    @Column(length = 50, nullable = false)
+    // ★ 修正：length = 100（以前は 50）
+    @Column(length = 100, nullable = false)
     private String title;
 
     /** 内容（長文対応） */
