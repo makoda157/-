@@ -1,13 +1,18 @@
 package com.techacademy.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.techacademy.constants.ErrorKinds;
@@ -16,8 +21,6 @@ import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.service.ReportService;
 import com.techacademy.service.UserDetail;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("reports")
@@ -34,12 +37,9 @@ public class ReportController {
     @GetMapping
     public String list(@AuthenticationPrincipal UserDetail user, Model model) {
         Employee loginUser = user.getEmployee();
-
-        // ★修正：一覧取得の二重呼び出しをやめ、1回の結果を使い回す
         List<Report> list = reportService.listFor(loginUser);
         model.addAttribute("reportList", list);
         model.addAttribute("listSize", list.size());
-
         return "reports/list";
     }
 
@@ -49,15 +49,12 @@ public class ReportController {
                          @AuthenticationPrincipal UserDetail user,
                          Model model,
                          RedirectAttributes redirectAttrs) {
-
         Report report = reportService.findById(id);
         if (report == null) {
-            // ★修正：存在しない場合は一覧へ戻す
             redirectAttrs.addFlashAttribute("detailError", "該当の日報が存在しません。");
             return "redirect:/reports";
         }
 
-        // ★修正：権限チェック（一般ユーザーは自分のもの以外を見られない）
         boolean isAdmin = user.getEmployee().getRole().isAdmin();
         if (!isAdmin && !report.getEmployee().getCode().equals(user.getEmployee().getCode())) {
             redirectAttrs.addFlashAttribute("authorityError", "権限がありません。");
@@ -80,14 +77,15 @@ public class ReportController {
                       BindingResult res,
                       @AuthenticationPrincipal UserDetail user,
                       Model model) {
-
         if (res.hasErrors()) {
+            model.addAttribute("report", report);
             return "reports/new";
         }
 
         ErrorKinds result = reportService.create(report, user.getEmployee());
         if (ErrorMessage.contains(result)) {
             model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+            model.addAttribute("report", report);
             return "reports/new";
         }
 
@@ -107,7 +105,6 @@ public class ReportController {
             return "redirect:/reports";
         }
 
-        // ★修正：フォーム表示時にも権限チェック
         boolean isAdmin = user.getEmployee().getRole().isAdmin();
         if (!isAdmin && !report.getEmployee().getCode().equals(user.getEmployee().getCode())) {
             redirectAttrs.addFlashAttribute("authorityError", "権限がありません。");
@@ -121,7 +118,7 @@ public class ReportController {
     /** 更新処理 */
     @PostMapping("/{id}/update")
     public String update(@PathVariable("id") Integer id,
-                         @Validated @ModelAttribute Report form,
+                         @Validated @ModelAttribute("report") Report form,
                          BindingResult res,
                          @AuthenticationPrincipal UserDetail user,
                          Model model) {
@@ -132,8 +129,13 @@ public class ReportController {
             return "reports/edit";
         }
 
+        // 画面再表示時に氏名を表示できるよう、従業員を補完しておく
+        if (form.getEmployee() == null) {
+            form.setEmployee(dbReport.getEmployee());
+        }
+
         if (res.hasErrors()) {
-            model.addAttribute("report", dbReport);
+            model.addAttribute("report", form);
             return "reports/edit";
         }
 
@@ -141,7 +143,7 @@ public class ReportController {
         ErrorKinds result = reportService.update(form, dbReport, isAdmin, user.getEmployee().getCode());
         if (ErrorMessage.contains(result)) {
             model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
-            model.addAttribute("report", dbReport);
+            model.addAttribute("report", form);
             return "reports/edit";
         }
 

@@ -23,6 +23,7 @@ public class ReportService {
     /** 一覧取得（権限別） */
     @Transactional(readOnly = true)
     public List<Report> listFor(Employee loginUser) {
+        // @SQLRestriction(delete_flg=false) が Entity に付与済みのため論理削除は除外される
         if (loginUser.getRole().isAdmin()) {
             return reportRepository.findAllByOrderByReportDateDesc();
         } else {
@@ -45,8 +46,7 @@ public class ReportService {
             boolean exists = reportRepository
                     .existsByEmployeeAndReportDateAndDeleteFlgFalse(owner, report.getReportDate());
             if (exists) {
-                // 画面側では ErrorMessage.DATECHECK_ERROR → reportDateError に紐づく
-                return ErrorKinds.DATECHECK_ERROR;
+                return ErrorKinds.DATECHECK_ERROR; // 画面側では reportDateError にマッピング
             }
 
             report.setEmployee(owner);
@@ -57,7 +57,7 @@ public class ReportService {
         }
     }
 
-    /** 更新処理 */
+    /** 更新処理（業務チェック：同一社員×同一日付の重複禁止／自分以外） */
     @Transactional
     public ErrorKinds update(Report src, Report dest, boolean isAdmin, String loginCode) {
         try {
@@ -66,9 +66,18 @@ public class ReportService {
                 return ErrorKinds.AUTHORITY_ERROR;
             }
 
+            // 重複（未削除）チェック：同一社員×同一日付 かつ 自分以外のID が存在するか
+            boolean duplicated = reportRepository.existsByEmployeeAndReportDateAndIdNotAndDeleteFlgFalse(
+                    dest.getEmployee(), src.getReportDate(), dest.getId());
+            if (duplicated) {
+                return ErrorKinds.DATECHECK_ERROR;
+            }
+
+            // 値反映
             dest.setReportDate(src.getReportDate());
             dest.setTitle(src.getTitle());
             dest.setContent(src.getContent());
+
             reportRepository.save(dest);
             return ErrorKinds.SUCCESS;
 
@@ -110,4 +119,3 @@ public class ReportService {
         }
     }
 }
-
