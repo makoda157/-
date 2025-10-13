@@ -55,21 +55,32 @@
             </table>
 
             <div class="mt-5 row g-1">
-              <!-- 更新：管理者 or 本人のみ表示 -->
-              <div class="col-auto"
-                   sec:authorize="hasAuthority('ADMIN') or #authentication.principal.employee.code == report.employee.code">
+              <!-- 更新：管理者 -->
+              <div class="col-auto" sec:authorize="hasAuthority('ADMIN')">
+                <a th:href="@{/reports/{id}/update(id=${report.id})}" class="btn btn-primary">更新</a>
+              </div>
+              <!-- 更新：本人（一般権限） -->
+              <div class="col-auto" sec:authorize="!hasAuthority('ADMIN')"
+                   th:if="${#authentication.principal.employee.code == report.employee.code}">
                 <a th:href="@{/reports/{id}/update(id=${report.id})}" class="btn btn-primary">更新</a>
               </div>
 
-              <!-- 削除：管理者 or 本人のみ表示（CSRF必須） -->
-              <div class="col-auto"
-                   sec:authorize="hasAuthority('ADMIN') or #authentication.principal.employee.code == report.employee.code">
+              <!-- 削除：管理者 -->
+              <div class="col-auto" sec:authorize="hasAuthority('ADMIN')">
                 <form th:action="@{/reports/{id}/delete(id=${report.id})}" method="post"
                       onsubmit="if(!window.confirm('本当に削除しますか？')){ event.preventDefault(); }">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <button type="submit" class="btn btn-primary">削除</button>
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                  <button type="submit" class="btn btn-primary">削除</button>
                 </form>
-
+              </div>
+              <!-- 削除：本人（一般権限） -->
+              <div class="col-auto" sec:authorize="!hasAuthority('ADMIN')"
+                   th:if="${#authentication.principal.employee.code == report.employee.code}">
+                <form th:action="@{/reports/{id}/delete(id=${report.id})}" method="post"
+                      onsubmit="if(!window.confirm('本当に削除しますか？')){ event.preventDefault(); }">
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                  <button type="submit" class="btn btn-primary">削除</button>
+                </form>
               </div>
 
               <!-- 戻る -->
