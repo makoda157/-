@@ -23,7 +23,6 @@ public class ReportService {
     /** 一覧取得（権限別） */
     @Transactional(readOnly = true)
     public List<Report> listFor(Employee loginUser) {
-        // @SQLRestriction(delete_flg=false) が Entity に付与済みのため論理削除は除外される
         if (loginUser.getRole().isAdmin()) {
             return reportRepository.findAllByOrderByReportDateDesc();
         } else {
@@ -42,22 +41,22 @@ public class ReportService {
     @Transactional
     public ErrorKinds create(Report report, Employee owner) {
         try {
-            // 既存（未削除）に同一日付があるか
             boolean exists = reportRepository
                     .existsByEmployeeAndReportDateAndDeleteFlgFalse(owner, report.getReportDate());
             if (exists) {
-                return ErrorKinds.DATECHECK_ERROR; // 画面側では reportDateError にマッピング
+                return ErrorKinds.DATECHECK_ERROR; // 画面側で reportDateError に割り付け
             }
 
             report.setEmployee(owner);
             reportRepository.save(report);
             return ErrorKinds.SUCCESS;
+
         } catch (Exception e) {
             return ErrorKinds.DB_ACCESS_ERROR;
         }
     }
 
-    /** 更新処理（業務チェック：同一社員×同一日付の重複禁止／自分以外） */
+    /** 更新処理（業務チェック：同一社員×同一日付の重複禁止、自分自身は除外） */
     @Transactional
     public ErrorKinds update(Report src, Report dest, boolean isAdmin, String loginCode) {
         try {
@@ -66,18 +65,17 @@ public class ReportService {
                 return ErrorKinds.AUTHORITY_ERROR;
             }
 
-            // 重複（未削除）チェック：同一社員×同一日付 かつ 自分以外のID が存在するか
-            boolean duplicated = reportRepository.existsByEmployeeAndReportDateAndIdNotAndDeleteFlgFalse(
+            // 同一社員×同一日付の重複（自分自身を除く）
+            boolean exists = reportRepository.existsByEmployeeAndReportDateAndIdNotAndDeleteFlgFalse(
                     dest.getEmployee(), src.getReportDate(), dest.getId());
-            if (duplicated) {
-                return ErrorKinds.DATECHECK_ERROR;
+            if (exists) {
+                return ErrorKinds.DATECHECK_ERROR; // 画面側で reportDateError に割り付け
             }
 
-            // 値反映
+            // 更新
             dest.setReportDate(src.getReportDate());
             dest.setTitle(src.getTitle());
             dest.setContent(src.getContent());
-
             reportRepository.save(dest);
             return ErrorKinds.SUCCESS;
 
@@ -95,7 +93,6 @@ public class ReportService {
                 return ErrorKinds.DB_ACCESS_ERROR;
             }
 
-            // 権限チェック：一般は自分の報告のみ削除可
             if (!isAdmin && !report.getEmployee().getCode().equals(loginCode)) {
                 return ErrorKinds.AUTHORITY_ERROR;
             }

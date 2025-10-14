@@ -18,10 +18,9 @@ public interface ReportRepository extends JpaRepository<Report, Integer> {
     /** 特定従業員の日報一覧（削除フラグ除外、日付降順） */
     List<Report> findByEmployeeOrderByReportDateDesc(Employee employee);
 
-    /** 業務チェック：同一社員×同一日付（未削除）存在確認（新規用） */
+    /** 新規登録用：同一社員×同一日付の未削除データが存在するか */
     boolean existsByEmployeeAndReportDateAndDeleteFlgFalse(Employee employee, LocalDate reportDate);
 
-    /** 業務チェック：同一社員×同一日付（未削除）存在確認（更新用：自分以外） */
-    boolean existsByEmployeeAndReportDateAndIdNotAndDeleteFlgFalse(
-            Employee employee, LocalDate reportDate, Integer id);
+    /** 更新用：同一社員×同一日付（自分自身を除く）の未削除データが存在するか */
+    boolean existsByEmployeeAndReportDateAndIdNotAndDeleteFlgFalse(Employee employee, LocalDate reportDate, Integer id);
 }
