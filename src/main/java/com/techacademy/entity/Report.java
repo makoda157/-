@@ -6,9 +6,20 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import lombok.Data;
 
 @Data
@@ -28,14 +39,15 @@ public class Report {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate reportDate;
 
-    /** タイトル */
+    /** タイトル（必須・100文字以内） */
     @NotBlank
-    // ★ 修正：length = 100（以前は 50）
+    @Size(max = 100)
     @Column(length = 100, nullable = false)
     private String title;
 
-    /** 内容（長文対応） */
+    /** 内容（必須・600文字以内：画面maxlengthと一致） */
     @NotBlank
+    @Size(max = 600)
     @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String content;
 
