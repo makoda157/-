@@ -13,10 +13,10 @@ import com.techacademy.entity.Report;
 public interface ReportRepository extends JpaRepository<Report, Integer> {
 
     /** 全件取得（削除フラグ除外、日付降順） */
-    List<Report> findAllByOrderByReportDateDesc();
+    List<Report> findByDeleteFlgFalseOrderByReportDateDesc();
 
     /** 特定従業員の日報一覧（削除フラグ除外、日付降順） */
-    List<Report> findByEmployeeOrderByReportDateDesc(Employee employee);
+    List<Report> findByEmployeeAndDeleteFlgFalseOrderByReportDateDesc(Employee employee);
 
     /** 新規登録用：同一社員×同一日付の未削除データが存在するか */
     boolean existsByEmployeeAndReportDateAndDeleteFlgFalse(Employee employee, LocalDate reportDate);
