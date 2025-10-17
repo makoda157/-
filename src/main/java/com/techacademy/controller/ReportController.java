@@ -147,7 +147,8 @@ public class ReportController {
             return "reports/edit";
         }
 
-        return "redirect:/reports/" + id + "/";
+        // ★ 修正：更新後は一覧へリダイレクト
+        return "redirect:/reports";
     }
 
     /** 削除処理（論理削除） */
