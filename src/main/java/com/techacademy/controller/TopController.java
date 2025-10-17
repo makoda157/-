@@ -28,7 +28,7 @@ public class TopController {
 
         // 管理者権限の場合 → 従業員一覧へ
         if ("ADMIN".equals(employee.getRole().toString())) {
-            return "redirect:/employees";
+            return "redirect:/reports";
         }
 
         // 一般権限の場合 → 日報一覧へ
