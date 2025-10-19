@@ -1,0 +1,38 @@
+services:
+  db_container:
+    build: ./db
+    container_name: db_container
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: daily_report_system
+      MYSQL_USER: repuser
+      MYSQL_PASSWORD: reppass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpass"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  web_container:
+    build:
+      context: ./web
+    container_name: web_container
+    depends_on:
+      db_container:
+        condition: service_healthy
+    ports:
+      - "18080:8080"
+    environment:
+      DB_HOST: db_container
+      DB_PORT: 3306
+      JAVA_OPTS: "-Dspring.profiles.active=default"
+    restart: unless-stopped
+
+
+volumes:
+  db_data:

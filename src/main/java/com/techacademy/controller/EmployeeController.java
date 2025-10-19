@@ -40,8 +40,8 @@ public class EmployeeController {
         return "employees/list";
     }
 
-    // 従業員詳細画面
-    @GetMapping(value = "/{code}")
+    // 従業員詳細画面（末尾スラッシュ有無の両方に対応）
+    @GetMapping(value = {"/{code}", "/{code}/"})
     public String detail(@PathVariable("code") String code, Model model) {
 
         model.addAttribute("employee", employeeService.findByCode(code));

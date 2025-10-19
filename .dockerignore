@@ -1,0 +1,10 @@
+# 不要なフォルダ・ファイルを除外
+.git/
+.gitignore
+.vscode/
+.idea/
+*.iml
+*.log
+
+# ビルド生成物を除外（JARだけはDockerfileで個別に指定してコピー）
+target/
